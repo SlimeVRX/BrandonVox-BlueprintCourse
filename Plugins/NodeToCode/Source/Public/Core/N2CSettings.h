@@ -383,7 +383,7 @@ public:
 
     /** Reference to user secrets containing API keys */
     UPROPERTY(Transient)
-    mutable TObjectPtr<UN2CUserSecrets> UserSecrets;
+    mutable UN2CUserSecrets* UserSecrets;
 
     /** Anthropic Model Selection - Sonnet 4 recommended*/
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | LLM Services | Anthropic")
@@ -420,15 +420,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Node to Code | LLM Services | DeepSeek",
         meta = (DisplayName = "API Key"))
     FString DeepSeek_API_Key_UI;
-
-    /** xAI Model Selection */
-    UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | LLM Services | xAI")
-    EN2CxAIModel xAI_Model = EN2CxAIModel::Grok_Code_Fast_1;
-    
-    /** xAI API Key - Stored separately in user secrets */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Node to Code | LLM Services | xAI",
-        meta = (DisplayName = "API Key"))
-    FString xAI_API_Key_UI;
 
     /** Ollama configuration */
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | LLM Services | Ollama")
@@ -470,10 +461,6 @@ public:
     /** DeepSeek Model Pricing */
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | LLM Services | Pricing | DeepSeek")
     TMap<EN2CDeepSeekModel, FN2CDeepSeekPricing> DeepSeekModelPricing;
-
-    /** xAI Model Pricing */
-    UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | LLM Services | Pricing | xAI")
-    TMap<EN2CxAIModel, FN2CxAIPricing> xAIModelPricing;
     
     /** Target programming language for translation */
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | Code Generation", 
@@ -484,6 +471,11 @@ public:
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | Code Generation",
         meta=(DisplayName="Max Translation Depth", ClampMin="0", ClampMax="5", UIMin="0", UIMax="5"))
     int32 TranslationDepth = 0;
+
+    /** Include Blueprint variables in serialization output */
+    UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | Code Generation",
+        meta=(DisplayName="Include Variables"))
+    bool bIncludeVariables = true;
     
     /** Minimum severity level for logging */
     UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Node to Code | Logging")
@@ -563,12 +555,6 @@ public:
                     return Pricing->InputCost;
                 }
                 return FN2CLLMModelUtils::GetDeepSeekPricing(DeepSeekModel).InputCost;
-            case EN2CLLMProvider::xAI:
-                if (const FN2CxAIPricing* Pricing = xAIModelPricing.Find(xAI_Model))
-                {
-                    return Pricing->InputCost;
-                }
-                return FN2CLLMModelUtils::GetxAIPricing(xAI_Model).InputCost;
             case EN2CLLMProvider::Ollama:
             case EN2CLLMProvider::LMStudio:
                 return 0.0f; // Local models are free
@@ -601,12 +587,6 @@ public:
                     return Pricing->OutputCost;
                 }
                 return FN2CLLMModelUtils::GetDeepSeekPricing(DeepSeekModel).OutputCost;
-            case EN2CLLMProvider::xAI:
-                if (const FN2CxAIPricing* Pricing = xAIModelPricing.Find(xAI_Model))
-                {
-                    return Pricing->OutputCost;
-                }
-                return FN2CLLMModelUtils::GetxAIPricing(xAI_Model).OutputCost;
             case EN2CLLMProvider::Ollama:
             case EN2CLLMProvider::LMStudio:
                 return 0.0f; // Local models are free

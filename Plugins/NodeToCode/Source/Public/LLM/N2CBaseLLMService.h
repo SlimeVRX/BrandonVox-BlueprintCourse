@@ -24,25 +24,14 @@ class NODETOCODE_API UN2CBaseLLMService : public UObject, public IN2CLLMService
 public:
     // Common implementations from IN2CLLMService
     virtual bool Initialize(const FN2CLLMConfig& InConfig) override;
-    virtual void SendRequest(
-        const FString& JsonPayload,
-        const FString& SystemMessage,
-        const FOnLLMResponseReceived& OnComplete
-    ) override;
+    virtual void SendRequest(const FString& JsonPayload, const FString& SystemMessage, 
+                           const FOnLLMResponseReceived& OnComplete) override;
     virtual bool IsInitialized() const override { return bIsInitialized; }
-    virtual UN2CResponseParserBase* GetResponseParser() const override { return ResponseParser.Get(); }
+    virtual UN2CResponseParserBase* GetResponseParser() const override { return ResponseParser; }
     
     // Provider-specific methods (must be implemented by derived classes)
-    virtual void GetConfiguration(
-        FString& OutEndpoint,
-        FString& OutAuthToken,
-        bool& OutSupportsSystemPrompts
-    ) override
-    {
-        OutEndpoint = TEXT("");
-        OutAuthToken = TEXT("");
-        OutSupportsSystemPrompts = false;
-    }
+    virtual void GetConfiguration(FString& OutEndpoint, FString& OutAuthToken, 
+                              bool& OutSupportsSystemPrompts) override { OutEndpoint = TEXT(""); OutAuthToken = TEXT(""); OutSupportsSystemPrompts = false; }
     virtual EN2CLLMProvider GetProviderType() const override { return EN2CLLMProvider::Anthropic; }
     virtual void GetProviderHeaders(TMap<FString, FString>& OutHeaders) const override { }
 
@@ -51,10 +40,7 @@ protected:
     virtual void InitializeComponents();
     
     // Virtual methods for provider-specific implementations
-    virtual FString FormatRequestPayload(const FString& UserMessage, const FString& SystemMessage) const
-    {
-        return TEXT("{}");
-    }
+    virtual FString FormatRequestPayload(const FString& UserMessage, const FString& SystemMessage) const { return TEXT("{}"); }
     virtual UN2CResponseParserBase* CreateResponseParser() { return nullptr; }
     virtual FString GetDefaultEndpoint() const { return TEXT(""); }
 
@@ -62,14 +48,13 @@ protected:
     FN2CLLMConfig Config;
     
     UPROPERTY()
-    TObjectPtr<UN2CHttpHandlerBase> HttpHandler;
+    UN2CHttpHandlerBase* HttpHandler;
     
     UPROPERTY()
-    TObjectPtr<UN2CResponseParserBase> ResponseParser;
+    UN2CResponseParserBase* ResponseParser;
     
     UPROPERTY()
-    TObjectPtr<UN2CSystemPromptManager> PromptManager;
+    UN2CSystemPromptManager* PromptManager;
     
-    /** Initialization state */
-    bool bIsInitialized = false;
+    bool bIsInitialized;
 };
